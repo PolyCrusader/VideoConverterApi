@@ -9,6 +9,7 @@ import ffmpegPath from 'ffmpeg-static';
 import got from 'got';
 import stream from 'stream';
 import util from 'util';
+import optimizeVideo from './video';
 
 //For env File 
 dotenv.config();
@@ -26,38 +27,34 @@ app.post('/', async (req: Request, res: Response) => {
     res.json({ error: "maxSize is not a number" });
     return;
   }
-  const parsed = urlParser.parse(fileUrl);
   let input_file: string = makeid(10) + "." + fileUrl.split('/').slice(-1).toString().split('.').slice(-1).toString();
 
   //download synchronously
   const pipeline = util.promisify(stream.pipeline);
   await pipeline(got.stream(fileUrl), fs.createWriteStream("uploads/" + input_file));
 
+  console.log(`${ffprobe.path} -v error -show_format -show_streams -of json uploads/${input_file}`);
+
+  const originalVideoInfoJson = JSON.parse(child_process.execSync(`${ffprobe.path} -v error -show_format -show_streams -of json uploads/${input_file}`).toString());
+
   //CRADO faire avec de la reocnnaissance d'extension on avec file
-  let input_streams = child_process.execSync(`${ffprobe.path} -loglevel error -show_entries stream=codec_type -of csv=p=0 uploads/${input_file}`).toString();
-  let duration = child_process.execSync(`${ffprobe.path} -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 uploads/${input_file}`).toString();
+  let input_streams = originalVideoInfoJson.streams.map((stream: any) => stream.codec_type).join("\n");
+  let duration: string = originalVideoInfoJson.format.duration;
 
   let output_format: string = "";
   let output_codec: string = "";
   let intput_duration: number;
-  if (input_streams == "video\n") {
-    console.log("got video");
-    console.log(duration);
-    if (duration == "N/A\n") {
-      output_format = ".webp";
-      output_codec = "libwebp";
-      intput_duration = 1;
-    } else {
-      output_format = ".mp4";
-      output_codec = "h264";
-      intput_duration = parseFloat(duration.toString());
-    }
+  if (duration == undefined) {
+    output_format = ".webp";
+    output_codec = "libwebp";
+    intput_duration = 1;
   } else {
+    intput_duration = parseFloat(duration.toString());
     output_format = ".mp4";
     output_codec = "h264";
-    intput_duration = parseFloat(duration.toString());
   }
 
+  /*
   //get 10sec of the video
   let short_duration = 10;
   if (intput_duration < short_duration) {
@@ -94,10 +91,12 @@ app.post('/', async (req: Request, res: Response) => {
   //clean files
   fs.unlinkSync(`tmp_generations/${short_file}`);
   fs.unlinkSync(`tmp_generations/${tmp_generation_file}`);
+  */
 
   const output_file = `${input_file.split('.').slice(0, -1).toString()}${output_format}`;
+  const { bitrate: outputBitrate, width: outputWith, height: outputHeight } = optimizeVideo(originalVideoInfoJson, final_size);
   //TODO remove the -y
-  let command: string = `${ffmpegPath} -i uploads/${input_file} -y -b:v ${outputBitrate}k -vcodec ${output_codec} outputs/${output_file}`;
+  let command: string = `${ffmpegPath} -i uploads/${input_file} -y -b:v ${outputBitrate} -vcodec ${output_codec} -vf scale=${outputWith}:${outputHeight},fps=25 outputs/${output_file}`;
   console.log(command);
 
   child_process.execSync(
