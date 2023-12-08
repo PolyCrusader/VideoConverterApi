@@ -54,7 +54,7 @@ app.post('/', async (req: Request, res: Response) => {
     output_codec = "h264";
   }
 
-  if (final_size / input_duration < 100) { //TODO maybe change the value
+  if (final_size / input_duration < 150) { //TODO maybe change the value
     res.json({ error: "maxSize is too small " + final_size / input_duration });
     return;
   }
