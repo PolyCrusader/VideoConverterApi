@@ -1,49 +1,61 @@
+let clicked = false;
+
 function processRequest() {
-    const fileUrl = document.getElementById('fileUrl').value;
-    const maxSize = document.getElementById('maxSize').value;
+    if (!clicked) {
+        clicked = true;
+        //hide gif and download link
+        document.getElementById('downloadLink').style.display = 'none';
+        document.getElementById('download').style.display = 'none';
+        updateProgressBar(0);
 
-    // Validate inputs
-    if (!fileUrl || !maxSize) {
-        alert('Please enter both URL and max size');
-        return;
-    }
+        const fileUrl = document.getElementById('fileUrl').value;
+        const maxSize = document.getElementById('maxSize').value;
 
-    const requestData = {
-        fileUrl: fileUrl,
-        maxSize: maxSize
-    };
+        // Validate inputs
+        if (!fileUrl || !maxSize) {
+            alert('Please enter both URL and max size');
+            return;
+        }
 
-    // Show loading spinner
-    document.getElementById('loading').style.display = 'flex';
+        const requestData = {
+            fileUrl: fileUrl,
+            maxSize: maxSize
+        };
 
-    // Make API request
-    // TODO: Change the URL to the API endpoint
-    fetch('http://localhost:8000/', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(requestData)
-    })
-        .then(response => response.json())
-        .then(data => {
-            // Hide loading spinner
-            document.getElementById('loading').style.display = 'none';
+        // Show loading spinner
+        document.getElementById('loading').style.display = 'flex';
 
-            if (data.error) {
-                alert('Error: ' + data.error);
-            } else {
-                // Display progress and hide download button
-                document.getElementById('progressBar').hidden = false;
-                // Start polling for progress
-                pollProgress(data.url.replace('outputs', 'progress'));
-            }
+        // Make API request
+        // TODO: Change the URL to the API endpoint
+        fetch('http://localhost:8000/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(requestData)
         })
-        .catch(error => {
-            // Hide loading spinner
-            document.getElementById('loading').style.display = 'none';
-            alert('Error: ' + error.message);
-        });
+            .then(response => response.json())
+            .then(data => {
+                // Hide loading spinner
+                document.getElementById('loading').style.display = 'none';
+
+                if (data.error) {
+                    alert('Error: ' + data.error);
+                } else {
+                    // Display progress and hide download button
+                    document.getElementById('progressBar').hidden = false;
+                    // Start polling for progress
+                    pollProgress(data.url.replace('outputs', 'progress'));
+                }
+            })
+            .catch(error => {
+                // Hide loading spinner
+                document.getElementById('loading').style.display = 'none';
+                alert('Error: ' + error.message);
+            });
+    } else {
+        alert('Please wait for the current process to finish');
+    }
 }
 
 function pollProgress(url) {
@@ -67,6 +79,8 @@ function pollProgress(url) {
 
                     // Stop polling
                     clearInterval(intervalId);
+
+                    clicked = false;
                 }
             })
             .catch(error => {
