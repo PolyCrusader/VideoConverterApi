@@ -1,6 +1,5 @@
 import express, { Request, Response, Application } from 'express';
 import ffprobe from 'ffprobe-static';
-import dotenv from 'dotenv';
 import child_process from 'child_process';
 import fs from 'fs';
 import ffmpeg from 'ffmpeg-static';
@@ -8,15 +7,18 @@ import got from 'got';
 import stream from 'stream';
 import util from 'util';
 
-//For env File 
-dotenv.config();
-
 const app: Application = express();
-const port = process.env.PORT || 8000;
+const port = 8000;
 
 app.use(express.json());
 
 app.post('/', async (req: Request, res: Response) => {
+  //create directory if not exists
+  if (!fs.existsSync("uploads")) fs.mkdirSync("uploads");
+  if (!fs.existsSync("outputs")) fs.mkdirSync("outputs");
+  if (!fs.existsSync("progress")) fs.mkdirSync("progress");
+  if (!fs.existsSync("tmp_generations")) fs.mkdirSync("tmp_generations");
+
   let fileUrl: string = req.body['fileUrl'];
   let final_size: number = parseInt(req.body['maxSize']);
 
