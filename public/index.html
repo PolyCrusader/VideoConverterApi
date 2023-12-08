@@ -4,171 +4,38 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="style.css">
   <title>Video/Image Processing</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 20px;
-    }
-
-    label {
-      display: block;
-      margin-bottom: 5px;
-    }
-
-    input {
-      margin-bottom: 10px;
-    }
-
-    button {
-      padding: 10px;
-      background-color: #4CAF50;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-
-    #loading {
-      display: none;
-      margin-top: 10px;
-    }
-
-    #progress {
-      margin-top: 10px;
-    }
-
-    #download {
-      display: none;
-      margin-top: 20px;
-    }
-
-    #progressBar {
-      width: 50%;
-      height: 20px;
-      border: 1px solid #ccc;
-      border-radius: 5px;
-      overflow: hidden;
-    }
-
-    #progressValue {
-      height: 100%;
-      width: 0;
-      background-color: #4CAF50;
-      transition: width 0.3s ease-in-out;
-    }
-  </style>
 </head>
 
 <body>
-  <h1>Video/Image Processing</h1>
+  <div class="container">
+    <h1>Video / Image Processing</h1>
 
-  <label for="fileUrl">URL:</label>
-  <input type="text" id="fileUrl" placeholder="Enter URL">
+    <label for="fileUrl">URL:</label>
+    <input type="text" id="fileUrl" placeholder="Enter URL">
 
-  <label for="maxSize">Max Size (MB):</label>
-  <input type="number" id="maxSize" placeholder="Enter max size">
+    <label for="maxSize">Max Size (kB):</label>
+    <input type="number" id="maxSize" placeholder="Enter max size">
 
-  <button onclick="processRequest()">Process</button>
+    <div id="loading" class="loading-container">
+      Processing... <div id="spinner" class="spinner"></div>
+    </div>
 
-  <div id="loading">Processing... <div id="spinner"
-      style="display: inline-block; width: 20px; height: 20px; border: 3px solid #f3f3f3; border-top: 3px solid #3498db; border-radius: 50%; animation: spin 1s linear infinite;">
+    <div id="progressContainer" class="progress-container">
+      <button onclick="processRequest()">Process</button>
+      <div id="progressBar" class="progress-bar">
+        <div id="progressValue" class="progress-value"></div>
+      </div>
+    </div>
+
+    <div id="download" class="download-container">
+      <a id="downloadLink" download class="download-link">Download Result</a>
+      <img id="goodGif" src="good.gif" />
     </div>
   </div>
 
-  <div id="progressContainer">
-    <div id="progressBar">
-      <div id="progressValue"></div>
-    </div>
-  </div>
-
-  <div id="download">
-    <a id="downloadLink" download>Download Result</a>
-  </div>
-
-  <script>
-    function processRequest() {
-      const fileUrl = document.getElementById('fileUrl').value;
-      const maxSize = document.getElementById('maxSize').value;
-
-      // Validate inputs
-      if (!fileUrl || !maxSize) {
-        alert('Please enter both URL and max size');
-        return;
-      }
-
-      const requestData = {
-        fileUrl: fileUrl,
-        maxSize: maxSize
-      };
-
-      // Show loading spinner
-      document.getElementById('loading').style.display = 'block';
-
-      // Make API request
-      //TODO: Change the URL to the API endpoint
-      fetch('http://localhost:8000/', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(requestData)
-      })
-        .then(response => response.json())
-        .then(data => {
-          // Hide loading spinner
-          document.getElementById('loading').style.display = 'none';
-
-          if (data.error) {
-            alert('Error: ' + data.error);
-          } else {
-            // Display progress and hide download button
-            document.getElementById('progressBar').hidden = false;
-            // Start polling for progress
-            pollProgress(data.url.replace('outputs', 'progress'));
-          }
-        })
-        .catch(error => {
-          // Hide loading spinner
-          document.getElementById('loading').style.display = 'none';
-          alert('Error: ' + error.message);
-        });
-    }
-
-    function pollProgress(url) {
-      const downloadLink = document.getElementById('downloadLink');
-      const progressBar = document.getElementById('progressBar');
-
-      const intervalId = setInterval(() => {
-        fetch(url)
-          .then(response => response.json())
-          .then(data => {
-            if (data.result === 'error') {
-              // Display progress and error message
-              // progressBar.value = data.avencement;
-              updateProgressBar(data.avencement);
-            } else {
-              updateProgressBar(100);
-              // progressBar.value = 100;
-              downloadLink.href = url.replace('progress', 'outputs');
-              downloadLink.style.display = 'block';
-              // Show download button
-              document.getElementById('download').style.display = 'block';
-
-              // Stop polling
-              clearInterval(intervalId);
-            }
-          })
-          .catch(error => {
-            // Display progress and error message
-            progressElement.innerText = 'Error fetching progress';
-          });
-      }, 1000);
-    }
-    function updateProgressBar(value) {
-      document.getElementById('progressValue').style.width = `${value}%`;
-    }
-  </script>
+  <script src="script.js"></script>
 </body>
 
 </html>
