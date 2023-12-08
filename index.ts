@@ -73,6 +73,12 @@ app.post('/', async (req: Request, res: Response) => {
 
 app.get('/outputs/:file', (req: Request, res: Response) => {
   const file = req.params.file;
+  // Validate the file parameter to ensure it contains only alphanumeric characters
+  if (!/^[a-zA-Z0-9_-]+(\.[a-zA-Z0-9]+)?$/.test(file)) {
+    res.status(400).json({ "result": "error", "error": "Invalid file parameter" });
+    return;
+  }
+
   const fileLocation = `outputs/${file}`;
   if (fs.existsSync(`progress/${file}-1.txt`) || fs.existsSync(`progress/${file}-2.txt`)) {
     res.redirect(`/progress/${file}`);
@@ -83,9 +89,15 @@ app.get('/outputs/:file', (req: Request, res: Response) => {
 
 app.get('/progress/:file', (req: Request, res: Response) => {
   const file = req.params.file;
+  // Validate the file parameter to ensure it contains only alphanumeric characters
+  if (!/^[a-zA-Z0-9_-]+(\.[a-zA-Z0-9]+)?$/.test(file)) {
+    res.status(400).json({ "result": "error", "error": "Invalid file parameter" });
+    return;
+  }
+
   if (fs.existsSync(`progress/${file}-1.txt`) || fs.existsSync(`progress/${file}-2.txt`)) {
     const progress = getProgress(file);
-    res.json({ "result": "error", "error": "encoding not finished", "avencement": progress });
+    res.status(202).json({ "result": "error", "error": "encoding not finished", "avencement": progress });
     return;
   }
   res.json({ "result": "success" });
@@ -126,7 +138,6 @@ function processImage(input_file: string, originalVideoInfoJson: any, final_size
       if (width % 2 !== 0) {
         width -= 1;
       }
-
     }
   } while (outputSize > final_size);
   let command = `${ffmpeg} -y -i tmp_generations/${output_file} -vf scale=${width}:${height} -c:v libwebp -progress progress/${output_file}-2.txt outputs/${output_file}`;
@@ -179,7 +190,6 @@ function deleteOldFiles() {
       fs.unlinkSync(fileLocation);
     }
   });
-
 }
 
 app.listen(port, () => {

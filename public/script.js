@@ -40,6 +40,7 @@ function processRequest() {
                 document.getElementById('loading').style.display = 'none';
 
                 if (data.error) {
+                    clicked = false;
                     alert('Error: ' + data.error);
                 } else {
                     // Display progress and hide download button
@@ -60,7 +61,6 @@ function processRequest() {
 
 function pollProgress(url) {
     const downloadLink = document.getElementById('downloadLink');
-    const progressBar = document.getElementById('progressBar');
 
     const intervalId = setInterval(() => {
         fetch(url)
