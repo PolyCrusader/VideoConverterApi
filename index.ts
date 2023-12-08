@@ -11,6 +11,7 @@ const app: Application = express();
 const port = 8000;
 
 app.use(express.json());
+app.use(express.static('public'));
 
 app.post('/', async (req: Request, res: Response) => {
   //create directory if not exists
@@ -18,6 +19,7 @@ app.post('/', async (req: Request, res: Response) => {
   if (!fs.existsSync("outputs")) fs.mkdirSync("outputs");
   if (!fs.existsSync("progress")) fs.mkdirSync("progress");
   if (!fs.existsSync("tmp_generations")) fs.mkdirSync("tmp_generations");
+
 
   let fileUrl: string = req.body['fileUrl'];
   let final_size: number = parseInt(req.body['maxSize']);
@@ -73,11 +75,20 @@ app.get('/outputs/:file', (req: Request, res: Response) => {
   const file = req.params.file;
   const fileLocation = `outputs/${file}`;
   if (fs.existsSync(`progress/${file}-1.txt`) || fs.existsSync(`progress/${file}-2.txt`)) {
+    res.redirect(`/progress/${file}`);
+    return;
+  }
+  res.download(fileLocation, file);
+});
+
+app.get('/progress/:file', (req: Request, res: Response) => {
+  const file = req.params.file;
+  if (fs.existsSync(`progress/${file}-1.txt`) || fs.existsSync(`progress/${file}-2.txt`)) {
     const progress = getProgress(file);
     res.json({ "result": "error", "error": "encoding not finished", "avencement": progress });
     return;
   }
-  res.download(fileLocation, file);
+  res.json({ "result": "success" });
 });
 
 function processVideo(input_file: string, originalVideoInfoJson: any, final_size: number, input_duration: number, output_file: string) {
