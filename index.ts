@@ -22,7 +22,7 @@ app.post('/', async (req: Request, res: Response) => {
 
 
   let fileUrl: string = req.body['fileUrl'];
-  let final_size: number = parseInt(req.body['maxSize']);
+  const final_size: number = parseInt(req.body['maxSize']) * 8;
 
   if (isNaN(final_size)) {
     res.json({ error: "maxSize is not a number" });
@@ -54,8 +54,8 @@ app.post('/', async (req: Request, res: Response) => {
     output_codec = "h264";
   }
 
-  if (final_size * 8 / input_duration < 100) { //TODO maybe change the value
-    res.json({ error: "maxSize is too small" });
+  if (final_size / input_duration < 100) { //TODO maybe change the value
+    res.json({ error: "maxSize is too small " + final_size / input_duration });
     return;
   }
 
@@ -104,7 +104,7 @@ app.get('/progress/:file', (req: Request, res: Response) => {
 });
 
 function processVideo(input_file: string, originalVideoInfoJson: any, final_size: number, input_duration: number, output_file: string) {
-  const outputBitrate = (final_size * 8) / originalVideoInfoJson.format.duration * (80 / 100);
+  const outputBitrate = (final_size / input_duration) * 80 / 100;
   //TODO remove the -y
   let command: string = `${ffmpeg} -y -i uploads/${input_file} -c:v libx264 -b:v ${outputBitrate}k -pass 1 -an -progress progress/${output_file}-1.txt -f null /dev/null && \
   ${ffmpeg} -y -i uploads/${input_file} -c:v libx264 -b:v ${outputBitrate}k -pass 2 -progress progress/${output_file}-2.txt outputs/${output_file}`;
